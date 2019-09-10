@@ -22,13 +22,6 @@ struct X_EXPAND_3_6 {
 	}
 };
 
-struct SPOT17_NOUAS2_3{//hosting a classical search with stack limit control
-	int known, active;
-	GINT64  stacks;
-	int * tua, nua;
-	void newspot(int * oua, int onua, SPOT17_NOUAS2_3 * sp, int cell, int bit = 0);
-};
-
 struct G17TMORE{// FIFO table of more for bands 1+2
 	uint64_t  t[G17MORESIZE];
 	int nt, maxt, curt;
@@ -132,23 +125,7 @@ struct MORE32 {// FIFO table of more for band b
 
 };
 
-struct G17TB3GO{
-	int ib3, minirows_triplets;
-	GINT64 pairs, // 27 bits  pairs holes 27 bits pairs cells(later pairs+triplets)
-		triplets,
-		count, // 4 items 9 bits/9 minirows 1;2;3 pairs any number of pairs
-		countsum,// 4 values (4x16 bits) min clues total and per stack
-		countstack;// count of clues per stack {bands 12 + countsum)
-	void Debug();
-}g17tb3go[512];
-
-//========== indexstep max number of blocs 
-
-#define MAXNIND6 20000
-
-
-//#include "g17_debuggingcode.cpp"
-// standard first band (or unique band)
+// standard  band 
 struct STD_B416 {
 	char band[28];
 	int band0[27], i416, gangster[9], map[27];
@@ -178,40 +155,7 @@ struct STD_B416 {
 	int ReviseG_triplet(int imini, int ip, STD_B416 * bb);
 	uint32_t GetMiniData(int index, uint32_t & bcells, STD_B416 *bb);
 };
-struct STD_B1_2 :STD_B416 {// en cours de destruction
-	XINDEX3 xindex3[2000];
-	X_EXPAND_3_6 x_expand_3_5[70000]; //51520 for 5 alone
-	int nxindex3,n3_5;
-	void PrintShortStatus();
-};
 
-struct STD_B3 :STD_B416 {// data specific to bands 3 à détruire 
-	struct GUAs {
-		BF128 isguasocket2, isguasocket3, isguasocket4;// active i81
-		int triplet[9];//same gua3s
-		int triplet_imini[81];
-		int ua_pair[81], ua_triplet[81]; // storing ua bitfields
-		int ua2_imini[81], ua3_imini[81];
-		int ua2_i27[81];
-	}guas;
-	int minirows_bf[9];
-	int triplet_perms[9][2][3];
-	//BF128 tbands_UA4_6s, tbands_pairs, tbands_triplets;
-	//int tuas46[81];
-	//_______________________
-	void InitBand3(int i16, char * ze, BANDMINLEX::PERM & p);
-	int IsGua(int i81);
-	int IsGua3(int i81);
-	int GetI81_2(int bf) {
-		for (int i = 0; i < 81; i++) if (guas.ua_pair[i] == bf) return i;
-		return -1;
-	}
-	int GetI81_3(int bf) {
-		for (int i = 0; i < 81; i++) if (guas.ua_triplet[i] == bf) return i;
-		return -1;
-	}
-	void PrintB3Status();
-};
 
 //================== UA collector 2 bands 
 
@@ -263,7 +207,6 @@ struct GENUAS_B12 {// for uas collection in bands 1+2 using brute force
 #define SIZETGUA 150
 #define GUAREDSIZE 100
 struct GEN_BANDES_12 {// encapsulating global data 
-	STD_B3 bands3[2];// to delete
 	int modeb12, go_back, diagmore;
 	char  rband2[28];
 	int  tc[6], ntc;
@@ -347,27 +290,31 @@ struct GEN_BANDES_12 {// encapsulating global data
 	void DebugGang();
 };
 struct G17B3HANDLER {
-	int known_b3, rknown_b3, active_b3,   ib3, nb3,
+	int known_b3, rknown_b3, active_b3,   nb3,
 		active_sub, ndead, wactive0, nmiss, ncritical,
-		irloop, wua, stack;
+		irloop, wua;
 	uint32_t mini_bf1, mini_bf2, mini_bf3,pairsbf,  pairs27, mini_triplet,
 		*uasb3if, nuasb3if, *uasb3of, nuasb3of,andoutf;
-	GINT64 stack_count;
 	int diagh;
 	// ================== entry in the proces
-	void Init(int i);
+	void Init();
 	uint32_t IsMultiple(int bf);
 	int BuildIfShortB3();
 	int ShrinkUas1();
 	//=============== process critical
 	void CriticalAssignCell(int Ru);
 	void Critical2pairs();
-	void Go_Critical(uint32_t * wua=0);
+	void Go_Critical();
 	void CriticalLoop();
 	void CriticalExitLoop();
 	void Critical_0_UA();
 	void CriticalFinalCheck();
 	//===================== process not critical
+	void ShrinkUasOfB3();
+	void Go_miss1b3();
+	void Go_miss2b3();
+	void ExpandBand3();
+	void Go_missx();
 	void Go_Not_Critical_missn();
 	//==================== process subcritical no cell added outside the GUAs field
 	void SubMini( int M, int mask);
@@ -377,132 +324,85 @@ struct G17B3HANDLER {
 	void PrintStatus();
 
 };
-struct BANDS_AB {// handling bands 12 in A B mode
-	struct BANDB { // when band a is filled
-		uint32_t tua[512],nua;
-		uint32_t pairs27, critbf, mini1, mini2, mini3, triplet,
-			mini_all,ncrit,nmiss,ncb2;
-		// uas in field outfiel
-		uint32_t *tuaif, *tuaof, nuaif, nuaof, andoutf;
-		// expansion 
-		int known_bb, rknown_bb, active_bb,
-			active_sub, ndead,  wactive0,
-			irloop,diag,diagbug;
-		uint32_t  wua;
 
-
-		void AddIF(uint32_t ua) {
-			if (nuaif >= 256)nuaif = 255;
-			ua &= BIT_SET_27;
-			ua |= _popcnt32(ua) << 27;
-			AddUA32(tuaif, nuaif,ua);
-		}
-		void AddOF(uint32_t ua) {
-			if (nuaof >= 256)nuaof = 255;
-			ua &= BIT_SET_27;
-			ua |= _popcnt32(ua) << 27;
-			AddUA32(tuaof, nuaof,ua);
-		}
-		inline void Ncrit() {
-			mini_all = mini1 | mini2 | mini3 | triplet;
-			ncrit= _popcnt32(mini_all)+ _popcnt32(mini3);
-			nmiss = ncb2 - ncrit;
-		}
-		//void Init(int i);
-		int BuildIF_short();
-		int ShrinkUas1();
-		void Go();
-		//=============== process critical
-		void CriticalAssignCell(int Ru);
-		void Go_Critical(uint32_t * wua = 0);
-		void CriticalLoop();
-		void CriticalExitLoop();
-		void Critical_0_UA();
-		//===================== process not critical
-		void Go_Not_Critical_missn();
-		//==================== process subcritical no cell added outside the GUAs field
-		void SubMini(int M, int mask);
-		void Go_Subcritical();
-		void Go_SubcriticalMiniRow();
-		int IsFinalOrMultiple(uint32_t * wua=0);
-		void Status();
-		void DebugIfOf();
-	}sbb;
-
-	uint32_t ni3, mode_ab, ia, ib,myuab,
-		indd,indf,filt32,ncluesbandb,stack_filter;
-	GINT64 stack_countba, stack_count, stack_countf;
-	XINDEX3 * myi3,wi3;
-	X_EXPAND_3_6 * myt3_5,wi3_5;
-	STD_B1_2 * mybb;
-	//======= band B initial infield outfield and more outfield table
-	uint32_t btuaif[256], btuaof[3000], tuaif[3000],
-		nbif,nbof;
-	uint32_t more_of[128], nmoreof, more_if[128], nmoreif;
-	//============== reduction of UAs GUAs
-	uint32_t tuasmini[36][100], ntuasmini[36], ntua,
-		activemini[36],nactivemini;
-	uint64_t tua[512];
-	//__________________________ secondary guas table 
-	uint32_t tuar2[81][GUAREDSIZE], tuar3[81][GUAREDSIZE],
-		ntuar2[81], ntuar3[81];
-	uint32_t guar2i81[81], guar3i81[81], nguared_2, nguared_3;
-	BF128 forced81_2, forced81_3, final81_2, final81_3;
-	//========== tclues for valid XY 
-	uint32_t tclues[40];// mini 25+band a
-	int ncluesa, nclues;
-	//==================== current band 3 to process
-	uint32_t tcluesb12[20], ncluesb3;
-	int  ntb3, nmiss;
-	uint32_t mini_bf1, mini_bf2, mini_bf3, pairsbf, pairs27, mini_triplet;
-	uint32_t all_used_minis, mincount;
-	uint32_t uasb3_1[2000], uasb3_2[2000],uas_in[2000], nuasb3_1, nuasb3_2,nuas_in;
-
-	void Go(STD_B1_2 & ba, STD_B1_2 & bb, int i, int mode);
-	void Init3clues();
-	int Init3_5clues();
-	int IsMultiple(int bf,int diag=0);
-	void CriticalFinalCheck(int bf);
-	void GuasCollect(int bf);
-	int SetUpGuas2_3(int ib3);
-	int EndCollectBand3(int ib3);
-	void GoBand3(int ib3);
-	void ExpandBand3();
-	int BuildUasB3_in(uint32_t known, uint32_t field);
-	void DebugInit();
-	void Status();
-};
 struct G17B {// hosting the search in 6 6 5 mode combining bands solutions
-	BF128 p17diag;// known 17 pattern for tests
+	//128 p17diag;// known 17 pattern for tests
 	int b3lim,debug17, diag,diagbug,aigstop,		npuz;
-	BANDS_AB bands_ab;
-	G17B3HANDLER g17hh0;
-	MORE32 moreb;
+	//BANDS_AB bands_ab;
+	//7B3HANDLER g17hh0;
 	//=====================process
-	void GoM10();// end preparation for a given band1+band2+ table band3 pass 656 566
-	void Go();
-	inline void SetUp(BANDS_AB::BANDB * bb){
-		bb->tuaof = bands_ab.btuaof;
-		bands_ab.ncluesb3 = 6;
-	}
 		
-	int GodebugFindKnown17();
-	int GodebugCheckUas(const char * lib);
 };
+struct BANDB { // when band a is filled
+	uint32_t tua[512], nua;
+	uint32_t pairs27, critbf, mini1, mini2, mini3, triplet,
+		mini_all, ncrit, nmiss, ncluesb;
+	// uas in field outfiel
+	uint32_t *tuaif, *tuaof, nuaif, nuaof, andoutf;
+	// expansion 
+	int known_bb, rknown_bb, active_bb,
+		active_sub, ndead, wactive0,
+		irloop, diag, diagbug;
+	uint32_t  wua;
+
+
+	void AddIF(uint32_t ua) {
+		if (nuaif >= 256)nuaif = 255;
+		ua &= BIT_SET_27;
+		ua |= _popcnt32(ua) << 27;
+		AddUA32(tuaif, nuaif, ua);
+	}
+	void AddOF(uint32_t ua) {
+		if (nuaof >= 256)nuaof = 255;
+		ua &= BIT_SET_27;
+		ua |= _popcnt32(ua) << 27;
+		AddUA32(tuaof, nuaof, ua);
+	}
+	inline void Ncrit() {
+		mini_all = mini1 | mini2 | mini3 | triplet;
+		ncrit = _popcnt32(mini_all) + _popcnt32(mini3);
+		nmiss = ncluesb - ncrit;
+	}
+	//void Init(int i);
+	int BuildIF_short();
+	int ShrinkUas1();
+	void Go();
+	//=============== process critical
+	void CriticalAssignCell(int Ru);
+	void Go_Critical(uint32_t * wua = 0);
+	void CriticalLoop();
+	void CriticalExitLoop();
+	void Critical_0_UA();
+	//===================== process not critical
+	void ShrinkUasOf();
+	void Go_miss1();
+	void Go_miss2();
+	void Go_Not_Critical_missn();
+	void ExpandBandB();
+	void Go_missx();
+	//==================== process subcritical no cell added outside the GUAs field
+	void SubMini(int M, int mask);
+	void Go_Subcritical();
+	void Go_SubcriticalMiniRow();
+	int IsFinalOrMultiple(uint32_t * wua = 0);
+	void Status();
+	void DebugIfOf();
+};
+
 struct GCHK {
-	STD_B416 bands_abc[3];
-	int mode_equal;
-	//__________________ band a expansion 
-	XINDEX3 xindex3[2000];
-	X_EXPAND_3_6 x_expand_3_6[350000]; //about 300000 for band 29 (1-416)
-	int nxindex3, n3_6;
-	void DoExpandBand();
-	void DebugExpand();
+	int npuz, aigstop, diag, diagbug;
 	//___________________ studied solution 
 	char zsol[82];// solution grid morphed
 	int grid0[81];// same 0 based
-
-
+	STD_B416 bands_abc[3];
+	int mode_equal;
+	//__________________ band a expansion 
+	XINDEX3 xindex3[2000],wi3;
+	X_EXPAND_3_6 x_expand_3_6[350000], //about 300000 for band 29 (1-416)
+		wi3_6;
+	int nxindex3, n3_6;
+	void DoExpandBand();
+	void DebugExpand();
 	//__________________ band C specific
 	struct GUAs {
 		BF128 isguasocket2, isguasocket3, isguasocket4;// active i81
@@ -514,10 +414,7 @@ struct GCHK {
 	}guas;
 	int minirows_bf[9];
 	int triplet_perms[9][2][3];
-	//BF128 tbands_UA4_6s, tbands_pairs, tbands_triplets;
-	//int tuas46[81];
-	//_______________________
-	void InitBand3(int i16, char * ze, BANDMINLEX::PERM & p);
+
 	int IsGua(int i81);
 	int IsGua3(int i81);
 	int GetI81_2(int bf) {
@@ -532,7 +429,63 @@ struct GCHK {
 	//================ debugging code
 	void GodebugInit(int mode);
 
+	//======================= band b  index 3 reduction
+	uint32_t  indf;
+	//____________ reduction of UAs GUAs
+	BF128 forced81_2, forced81_3;
+	uint64_t tua[512];
+	uint32_t tuasmini[36][100], ntuasmini[36], ntua,
+		activemini[36], nactivemini;
+	uint32_t tuar2[81][GUAREDSIZE], tuar3[81][GUAREDSIZE],
+		ntuar2[81], ntuar3[81];
+	uint32_t guar2i81[81], guar3i81[81], nguared_2, nguared_3;
+	//____________ tclues for bands A+B
+	uint32_t tclues[40];// mini 25+band a
+	int ncluesa, nclues;
+
+	//=============== band B when band A is locked 
+	BF128  final81_2, final81_3;
+	BANDB sbb;
+	//_____  initial infield outfield and more  
+	uint32_t btuaif[256], btuaof[3000], tuaif[3000],
+		nbif, nbof;
+	uint32_t more_of[128], nmoreof, more_if[128], nmoreif;
+	uint32_t  mode_ab, myuab, filt32, 
+		mincluesb,maxcluesb,	mincluesc, maxcluesc ;
+	MORE32 moreb;
+
 
 	// start the process for a triplet banda band b bandc 
 	void Start(STD_B416 * bandx, int * tp,int * tsort,int mode);
+	void GoBanda();
+	void Init3clues();
+	int Init3_6clues();
+	//_______________  end of band b before band 3
+	int IsMultiple(int bf, int diag = 0);
+	void CriticalFinalCheck(int bf,int debug=0);
+	void GuasCollect(int bf);
+	int SetUpGuas2_3();
+	void EndCollectBand3();
+	void GoBand3();
+	void ExpandBand3();
+	int BuildUasB3_in(uint32_t known, uint32_t field);
+	//==================== current band 3 to process
+	uint32_t  ncluesb3;
+	int  ntb3, nmiss;
+	uint32_t mini_bf1, mini_bf2, mini_bf3, pairsbf, pairs27, mini_triplet;
+	uint32_t all_used_minis, mincount,andb3;
+	uint32_t uasb3_1[2000], uasb3_2[2000], uas_in[2000], nuasb3_1, nuasb3_2, nuas_in;
+	void Status();
+
+
 };
+/*
+	uint32_t  mode_ab, myuab,	filt32,ncluesbandb;
+
+	//==================== current band 3 to process
+	uint32_t tcluesb12[20], ncluesb3;
+	int  ntb3, nmiss;
+	uint32_t mini_bf1, mini_bf2, mini_bf3, pairsbf, pairs27, mini_triplet;
+	uint32_t all_used_minis, mincount;
+	uint32_t uasb3_1[2000], uasb3_2[2000],uas_in[2000], nuasb3_1, nuasb3_2,nuas_in;
+*/

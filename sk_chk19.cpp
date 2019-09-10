@@ -52,14 +52,13 @@ ofstream  fout1, fout2;
 //XY_EXPAND xye6[2][MAXN6], xye5[2][MAXN5];
 G17B g17b;
 GCHK gchk;
-uint64_t p_cptg[40], p_cpt1g[20], p_cpt2g[40];
+uint64_t p_cptg[40], p_cpt1g[40], p_cpt2g[40];
 uint64_t p_cpt[40], p_cpt1[20];
 
 FINPUT finput;
 
 #include "go_17sol_tables.h"
 
-STD_B1_2 myband1, myband2;
 GENUAS_B12 genuasb12;
 GEN_BANDES_12 genb12;
 #include "go_17_bands_cpp.h"  

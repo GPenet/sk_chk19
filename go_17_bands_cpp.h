@@ -137,26 +137,6 @@ uint32_t  STD_B416::GetMiniData(int index, uint32_t & bcells, STD_B416 *bb) {
 }
 
 
-void STD_B1_2::PrintShortStatus() {
-	cout  << band << "\t\tband main data i0-415="<<i416 << endl;
-	cout << "nua    \t" << nua << endl;
-
-}
-
-void STD_B3::InitBand3(int i16, char * ze, BANDMINLEX::PERM & p) {
-	InitBand2_3(i16, ze, p);
-	memset(&guas, 0, sizeof guas);
-	// setup minirows bit fields
-	for (int i = 0; i < 9; i++) {
-		minirows_bf[i] = 0;
-		int * p = &band0[3 * i];
-		for (int j = 0; j < 3; j++)
-			minirows_bf[i] |= 1 << p[j];
-	}
-	//cout << band << " " << oct << minirows_bf[0]
-	//	<< " " << minirows_bf[1] << dec << endl;
-
-}
 /* GUA4 GUA6
 .x. .y.
 ..y .x.
@@ -261,29 +241,6 @@ int GCHK::IsGua3(int i81) {
 	return 0;
 }
 
-void STD_B3::PrintB3Status() {
-	cout << "band3 status" << endl;
-	for (int i = 0, ij = 0; i < 3; i++) {
-		for (int j = 0; j < 9; j++, ij++) cout << band0[ij] + 1;
-		cout << endl;
-	}
-	cout << endl<<"gua2 gua4 gua6s" << endl;
-	for (int i = 0; i < 81; i++){
-		int w = guas.ua_pair[i];
-		if (w) cout << Char27out(w) << " i81=" << i << endl;
-	}
-	cout  << "gua3s" << endl;
-	for (int i = 0; i < 81; i++) {
-		int w = guas.ua_triplet[i];
-		if (w) cout << Char27out(w) << " i81=" << i << endl;
-	}
-	char ws[129];
-	const char* w3 = "123456789...---...123456789";
-	cout << w3 << w3 << w3 << endl;;
-	cout << guas.isguasocket2.String128(ws) << " sock2" << endl;
-	cout << guas.isguasocket4.String128(ws) << " sock4" << endl;
-	cout << guas.isguasocket3.String128(ws) << " sock3" << endl;
-}
 
 //==================== sockets UA2s UA3s control
 
@@ -481,29 +438,6 @@ void GENUAS_B12::EndCollectMoreStep() {
 		ua = zh1b_g.tua[i] &= BIT_SET_27;
 		if (!ib) ua <<= 32;
 		ua |= w0;
-		if (g17b.debug17) {
-			if (!(ua&g17b.p17diag.bf.u64[0])) {
-				cout << "EndCollectMoreStep error wrong ua more  seen i="<<i 
-					<<" zh1b_g.nua= "<< zh1b_g.nua << endl;
-				cout << Char2Xout(ua) << " wrong ua table coming out of zhone" << endl;
-				for (uint32_t i = 0; i < zh1b_g.nua; i++) {
-					cout << Char27out(zh1b_g.tua[i]) << endl;
-				}
-				cout << "floors 0" << oct << floors << " digs 0" << digp <<dec<< endl;
-				//zhone[0].InitOne_std_band();
-				zhone[0].Start_Uas_Mini(floors, digp);
-				zhone[0].ApplyGangsterChanges(bb->gangster, bb->revised_g);
-				//zhone[0].ImageCandidats();//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-				zh1b_g.nua = 0;
-				zhone[0].InitGuess();
-				zh1b_g.diag = 1;
-				if(nfloors==6)zhone[0].Guess6();
-				else zhone[0].Guess7();
-				zh1b_g.diag = 0;
-				continue;
-			}
-
-		}
 		ua &= BIT_SET_2X;// be sure to use only relevant bits
 		uint64_t cc = _popcnt64(ua);
 		if (diag)cout << Char2Xout(ua) << "\t " << cc << "  ua to check" << endl;

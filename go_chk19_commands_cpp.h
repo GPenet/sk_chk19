@@ -1,8 +1,35 @@
 
 //========================================
-const char * zh_g_cpt[10] = { "npuz", "guess", "close_d ", "upd1 ", "upd2 ",
-"fupd ", "hpair ", "htripl ", " ", " " };
+const char * libs_c17_00_cpt1g[40] = {
+	"0 max outfield b 0",//0
+	"1 max outfield b 1",//1
+	"2 max outfield b 2",//2
+	"3 max outfield b 3",//3
+	"4 max outfield b 4",//4
+	"5 max outfield b 5",//5
+	"6 max outfield b 6",//6
+	"7 max outfield b 7",//7
+	"8 max outfield b 8",//8
+	"9 ",//9
+	"10 band A 3 clues",//10
+	"11 band A 4 clues",//11
+	"12 band A 5 clues",//12
+	"13 band A 6 clues",//13
+	"14 ",//14
+	"15 band B <6 clues",//15
+	"16 band B 6 clues",//16
+	"17 band B 7 clues",//17
+	"18 band B >7 clues",//18
+	"19 ",//19
+	"20 ",//20
+	"21 ",//21
+	"22 ",//22
+	"23 ",//23
+	"24 ",	"25 ",	"26 ",	"27",	"28", "29",
+	"30",	"31",	"32",	"33", "34",
+	"35",	"36",	"37",	"38", "39",
 
+};
 const char * libs_c17_00_cpt2g[40] = {
 	"0 bands1+2 processed entries M10",//0
 	"1 total bands 3",//1
@@ -87,9 +114,9 @@ void Go_chk19_10() {
 	while (finput.GetLigne()) {
 		if(strlen(ze)<81) continue;// skip blank lines
 		npuz++;
-		g17b.npuz = npuz;
-		g17b.aigstop= 0;
-		g17b.debug17 = 0;
+		memset(p_cpt1g, 0, sizeof p_cpt1g);
+		gchk.npuz = npuz;
+		gchk.aigstop= 0;
 		long tdeb = GetTimeMillis();
 		cout << ze <<  " to process  n="  << npuz << endl;
 
@@ -99,13 +126,15 @@ void Go_chk19_10() {
 		bandminlex.Getmin(zs0, &perm_ret);
 		int ib1 = perm_ret.i416, ib1a = t416_to_n6[ib1];
 		bax[0].InitBand2_3(ib1, ze, perm_ret);
+		cout << ib1 << "\tib1 mins=" << t16_min_clues[bax[0].i416] << endl;
 		bandminlex.Getmin(&zs0[27], &perm_ret);
 		int ib2 = perm_ret.i416, ib2a = t416_to_n6[ib2];
 		bax[1].InitBand2_3(ib2, &ze[27], perm_ret);
+		cout << ib2 << "\tib2 mins=" << t16_min_clues[bax[1].i416] << endl;
 		bandminlex.Getmin(&zs0[54], &perm_ret);
 		int ib3 = perm_ret.i416, ib3a = t416_to_n6[ib3];
 		bax[2].InitBand2_3(ib3, &ze[54], perm_ret);
-		cout << ib1a << "\t" << ib2a << "\t" << ib3a 
+		cout << ib1  << "\t" << ib2  << "\t" << ib3  
 			<<"\tmins="<< t16_min_clues[bax[0].i416] 
 			<< t16_min_clues[bax[1].i416] 
 			<< t16_min_clues[bax[2].i416] << endl;
@@ -136,6 +165,12 @@ void Go_chk19_10() {
 		//genb12.ValidInitGang();
 		//g17b.npuz = npuz;
 		//g17b.GoM10();
+		cout << "print puzzle  stats" << endl;
+		for (int i = 0; i < 20; i++) {
+			if (!p_cpt1g[i])continue;
+			cout << p_cpt1g[i] << "\t\t" << libs_c17_00_cpt1g[i] << endl;
+		}
+
 	}
 	cout << "print final stats" << endl;
 	for (int i = 0; i < 20; i++) {
